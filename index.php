@@ -23,8 +23,7 @@ function transformUrl ($url) {
     }
     asort($params);
     $params['url'] = $urlArray[path];
-    $newUrl = $urlArray[scheme].'://'.$urlArray[host].'/?'.http_build_query($params, '', '&amp;');
-    return $newUrl;
+    return $urlArray[scheme].'://'.$urlArray[host].'/?'.http_build_query($params, '', '&amp;');
 }
 
 $url = 'https://www.somehost.com/test/index.html?param1=4&param2=3&param3=2&param4=1&param5=3';
@@ -33,42 +32,103 @@ echo(transformUrl($url));
 echo "</pre>";
 
 //Задание 3
-/*
-class ArticleService implements IArticleService {.......}
+
+/**
+ * Класс "пользователь"
+ * Class User
+ */
+class User
+{
+    /**
+     * Атрибут хранящий id пользователя
+     * @var integer
+     */
+    public $userId;
+    /**
+     * Атрибут хранящий имя пользователя
+     * @var string
+     */
+    public $username;
+}
+
+/**
+ * Класс "Статья"
+ * Class Article
+ */
+class Article
+{
+    /**
+     * @var integer
+     */
+    private $authorId;
+    /**
+     * @var string
+     */
+    public $content;
+
+    /**
+     * Получить автора статьи
+     * @return int
+     */
+    public function GetAuthorId()
+    {
+        return $this->authorId;
+    }
+}
+
+/**
+ * Interface IArticleService
+ */
 interface IArticleService
 {
-    function getByUserId($authorId); // @returns array of type Article
+    /**
+     * Получить все статьи пользователя
+     * @param $authorId
+     * @return array of type Article
+     */
+    function getByUserId($authorId);
 
-    function changeAuthor($articleId, $userId); // void
+    /**
+     * Изменить автора статьи
+     * @param $articleId
+     * @param $userId
+     * @return void
+     */
+    function changeAuthor($articleId, $userId);
 
-    function add($userId, $article); // void
+    /**
+     * Добавить статью автора
+     * @param $userId
+     * @param $article
+     * @return void
+     */
+    function add($userId, $article);
 }
-interface IArticleService
-{
-    function getByUserId($authorId); // @returns array of type Article
 
-    function changeAuthor($articleId, $userId); // void
-
-    function add($userId, $article); // void
-}
-
+/**
+ * Interface IUserService
+ */
 interface IUserService
 {
-    function getById($userId); // @returns User
+    /**
+     * @param $userId
+     * @return User
+     */
+    function getById($userId);
 }
- */
 
 //Задание 4
-//уязвимость - через гет можно передать передать любую строку в том числе инъекцию
-//отдельные запросы для каждого пользователя для каждого запроса новое открытие бызы
-//функции необходимо передавать массив вместо строки
+//уязвимость - через get можно передать передать любую строку в том числе инъекцию
+//отдельные запросы и подключения для каждого пользователя
+//на сервер должен приходить массив вместо строки для безопасности
 /*
-function load_users_data($user_ids) {
-    $user_ids = explode(',', $user_ids);//убрать
-    foreach ($user_ids as $user_id) {//проверка isnumber, implode() в строку и строку в запрос
+function load_users_data($user_ids) { //вместо строки передавать массив
+    $user_ids = explode(',', $user_ids); //проверить, что в массиве только int
+    foreach ($user_ids as $user_id) {
+        //необходимо убрать подключение из цикла и изменить запрос
         $db = mysqli_connect("localhost", "root", "123123", "database");
         $sql = mysqli_query($db, "SELECT * FROM users WHERE id=$user_id");
-        while($obj = $sql->fetch_object()){//
+        while($obj = $sql->fetch_object()){ //
             $data[$user_id] = $obj->name;
         }
         mysqli_close($db);
@@ -76,25 +136,30 @@ function load_users_data($user_ids) {
     return $data;
 }
 */
-function load_users_data ($userIds) {
-    /*foreach($userIds as $userId) {
-        if(!is_numeric($userId)) return "Массив содержит нечисловое значение";
-    }*/
+function load_users_data ($userIds) { //передаётся массив int
+    foreach($userIds as $userId) {
+        //проверка что в массиве только int
+        if(!is_int($userId)) return false;
+    }
+    //объединение всех id в строку
     $userIdsStr = implode(',', $userIds);
-    echo "$"
     $db = mysqli_connect("localhost", "root", "", "mybase");
-    $sql = mysqli_query($db, "SELECT * FROM users_test WHERE id in {$userIdsStr}");
-    echo ($sql);
-    /*while($obj = $sql->fetch_object()) {
-        $data[$obj->id] = $obj->name;
-    }*/
+    //запрос сразу всех записей без цикла
+    $sql = mysqli_query($db, "SELECT `id`, `name` FROM users_test 
+                                WHERE `id` in ({$userIdsStr})");
+    if($sql) {
+        while ($row = mysqli_fetch_assoc($sql)) {
+            $data[$row["id"]] = $row["name"];
+        }
+    }
     mysqli_close($db);
     return $data;
 }
 // Как правило, в $_GET['user_ids'] должна приходить строка
 // с номерами пользователей через запятую, например: 1,2,17,48
 $data = load_users_data([1, 2, 3]);//$_GET['user_ids']);
-foreach ($data as $user_id=>$name) {
-    echo "<a href=\"/show_user.php?id=$user_id\">$name</a>";
+//запрос необходим POST а не GET
+foreach ($data as $user_id => $name) {
+    echo "<a href=\"/show_user.php?id=$user_id\">$name</a><br>";
 }
 

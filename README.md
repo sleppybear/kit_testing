@@ -4,7 +4,9 @@
 
 Имеется база со следующими таблицами: 
 CREATE TABLE `users` ( 
+
     `id`         INT(11) NOT NULL AUTO_INCREMENT, 
+    
     `name`       VARCHAR(255) DEFAULT NULL, 
     `gender`     INT(11) NOT NULL COMMENT '0 - не указан, 1 - мужчина, 2 - женщина.', 
     `birth_date` INT(11) NOT NULL COMMENT 'Дата в unixtime.', 
